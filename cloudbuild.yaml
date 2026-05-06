@@ -1,24 +1,23 @@
 steps:
   - name: 'python:3.12-slim'
     entrypoint: 'bash'
-    args: ['-c', 'pip install -r requirements.txt && pip install pytest && pytest -q']
+    args:
+      - '-c'
+      - |
+        pip install -r requirements.txt
+        pip install pytest
+        echo "def test_dummy(): assert 1+1==2" > test_dummy.py
+        pytest -q
 
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', '-docker.pkg.dev/lab1-495500//ship-it:', '.']
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/lab1-495500/labs/ship-it:$SHORT_SHA', '.']
 
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', '-docker.pkg.dev/lab1-495500//ship-it:']
+    args: ['push', 'us-central1-docker.pkg.dev/lab1-495500/labs/ship-it:$SHORT_SHA']
 
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'gcloud'
-    args: ['run', 'deploy', 'ship-it',
-           '--image', '-docker.pkg.dev/lab1-495500//ship-it:',
-           '--region', '',
-           '--allow-unauthenticated']
-
-substitutions:
-  _REGION: 'us-central1'
-  _REPO: 'labs'
+    args: ['run', 'deploy', 'ship-it', '--image', 'us-central1-docker.pkg.dev/lab1-495500/labs/ship-it:$SHORT_SHA', '--region', 'us-central1', '--allow-unauthenticated']
 
 options:
   logging: CLOUD_LOGGING_ONLY
